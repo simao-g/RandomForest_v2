@@ -25,17 +25,6 @@ class Tree(object):
         self.left_child = None
         self.right_child = None
 
-
-        """ 
-            -------------------------------------------------
-            |                                               |
-            |                PROPOSED CHANGE                |
-            |                                               |
-            -------------------------------------------------
-        """
-        self.tree_class_distribution = None
-
-
     @property
     def is_terminal(self):
         return not bool(self.left_child and self.right_child)
@@ -76,17 +65,7 @@ class Tree(object):
                     max_col, max_val, max_gain = column, value, gain
         return max_col, max_val, max_gain
 
-    def _train(self, X, target, max_features=None, min_samples_split=10, max_depth=None, minimum_gain=0.01, tree_class_distribution=None):
-        # added a new parameter tree_class_distribution
-        """ 
-            -------------------------------------------------
-            |                                               |
-            |                PROPOSED CHANGE                |
-            |                                               |
-            -------------------------------------------------
-        """
-        self.tree_class_distribution = tree_class_distribution
-        
+    def _train(self, X, target, max_features=None, min_samples_split=10, max_depth=None, minimum_gain=0.01):
         try:
             # Exit from recursion using assert syntax
             assert X.shape[0] > min_samples_split
@@ -112,12 +91,12 @@ class Tree(object):
             # Grow left and right child
             self.left_child = Tree(self.regression, self.criterion, self.n_classes)
             self.left_child._train(
-                left_X, left_target, max_features, min_samples_split, max_depth - 1, minimum_gain, self.tree_class_distribution
+                left_X, left_target, max_features, min_samples_split, max_depth - 1, minimum_gain
             )
 
             self.right_child = Tree(self.regression, self.criterion, self.n_classes)
             self.right_child._train(
-                right_X, right_target, max_features, min_samples_split, max_depth - 1, minimum_gain, self.tree_class_distribution
+                right_X, right_target, max_features, min_samples_split, max_depth - 1, minimum_gain
             )
         except AssertionError:
             self._calculate_leaf_value(target)
@@ -154,25 +133,12 @@ class Tree(object):
         if not self.regression:
             self.n_classes = len(np.unique(target['y']))
 
-
-        """ 
-            -------------------------------------------------
-            |                                               |
-            |                PROPOSED CHANGE                |
-            |                                               |
-            -------------------------------------------------
-        """
-        self.tree_class_distribution = (np.bincount(target["y"], minlength=self.n_classes) / len(target["y"]))
-
-
-
         self._train(X, target, max_features=max_features, min_samples_split=min_samples_split,
-                    max_depth=max_depth, minimum_gain=minimum_gain, tree_class_distribution=self.tree_class_distribution)
+                    max_depth=max_depth, minimum_gain=minimum_gain)
 
 
     def _calculate_leaf_value(self, targets):
         """Find optimal value for leaf."""
-
         if self.loss is not None:
             # Gradient boosting
             self.outcome = self.loss.approximate(targets["actual"], targets["y_pred"])
@@ -182,28 +148,8 @@ class Tree(object):
                 # Mean value for regression task
                 self.outcome = np.mean(targets["y"])
             else:
-
-                """ 
-                    -------------------------------------------------
-                    |                                               |
-                    |                PROPOSED CHANGE                |
-                    |                                               |
-                    -------------------------------------------------
-                """
                 # Probability for classification task
-                leaf_counts = np.bincount(targets["y"], minlength=self.n_classes)
-                leaf_distribution = leaf_counts / targets["y"].shape[0]
-
-                # Minority class
-                tree_distribution = self.tree_class_distribution  
-                minority_class = np.argmin(tree_distribution)
-
-                if leaf_distribution[minority_class] > tree_distribution[minority_class]:
-                    # Predict minority class
-                    self.outcome = minority_class
-                else:
-                    # Use class distribution or majority
-                    self.outcome = leaf_distribution
+                self.outcome = np.bincount(targets["y"], minlength=self.n_classes) / targets["y"].shape[0]
 
     def predict_row(self, row):
         """Predict single row."""
