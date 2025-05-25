@@ -1,0 +1,5 @@
+métrica,média_antes,média_depois,diferença média,normalidade (p),teste,p-valor,significativo
+f1_score,0.7163570387577413,0.49964729142608816,-0.21670974733165296,0.0,Wilcoxon,1.0,False
+recall_minority,0.5166042239377363,0.14477843915343916,-0.3718257847842972,0.0,Wilcoxon,1.0,False
+precision_recall_auc,0.7417061917182329,0.7367910530128391,-0.0049151387053939745,1.0,t-teste pareado,,False
+balanced_accuracy,0.7236237188817837,0.5409922930451357,-0.18263142583664793,0.0,Wilcoxon,1.0,False
